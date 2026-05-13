@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flights — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container" style="position:relative">
+        <h1>Flights</h1>
+        <p id="route-summary"></p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+        <div class="search-tabs" style="margin-bottom:var(--gap-md)">
+          <div class="search-tab active" data-tab="depart" role="button">Departure Flight</div>
+          <div class="search-tab" data-tab="edit" role="button">Edit Flight</div>
+        </div>
+
+        <div class="card mb-md hidden" id="edit-card">
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">From</label>
+                <select class="form-control" id="edit-from"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">To</label>
+                <select class="form-control" id="edit-to"></select>
+              </div>
+              <div class="form-group" style="align-self:end">
+                <button class="btn btn-primary" id="apply-edit">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="date-chips" id="date-chips"></div>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>Stops</label>
+            <select class="form-control" id="filter-stops">
+              <option value="any">Any</option>
+              <option value="0">Direct</option>
+              <option value="1">1 stop</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Max price <span id="max-price-label">$2000</span></label>
+            <input type="range" min="100" max="2000" step="50" value="2000" id="filter-price" />
+          </div>
+          <div class="filter-group">
+            <label>Departure time</label>
+            <select class="form-control" id="filter-time">
+              <option value="any">Any</option>
+              <option value="early">Early (00–06)</option>
+              <option value="morning">Morning (06–12)</option>
+              <option value="afternoon">Afternoon (12–18)</option>
+              <option value="evening">Evening (18–24)</option>
+            </select>
+          </div>
+          <div class="filter-group" style="margin-left:auto">
+            <label>Sort</label>
+            <select class="form-control" id="filter-sort">
+              <option value="price-asc">Price ↑</option>
+              <option value="price-desc">Price ↓</option>
+              <option value="depart-asc">Departure ↑</option>
+              <option value="duration-asc">Duration ↑</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flights-list-wrapper" id="flights-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="main.js"></script>
+  <script>
+    mountChrome('search');
+
+    const booking = loadBooking();
+    let params = booking.searchParams || { from: 'SYD', to: 'MEL', departDate: '2026-06-01', passengers: 1, cabin: 'Economy' };
+    document.getElementById('route-summary').textContent =
+      `${params.from} → ${params.to} · ${params.passengers} passenger(s) · ${params.cabin || 'Economy'}`;
+
+    // Edit-flight controls
+    const editFrom = document.getElementById('edit-from');
+    const editTo   = document.getElementById('edit-to');
+    FDA.airports.forEach(a => {
+      editFrom.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
+      editTo.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
+    });
+    editFrom.value = params.from;
+    editTo.value   = params.to;
+
+    document.querySelectorAll('.search-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.search-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.getElementById('edit-card').classList.toggle('hidden', t.dataset.tab !== 'edit');
+      });
+    });
+    document.getElementById('apply-edit').addEventListener('click', () => {
+      params = { ...params, from: editFrom.value, to: editTo.value };
+      saveBooking({ searchParams: params });
+      document.getElementById('route-summary').textContent =
+        `${params.from} → ${params.to} · ${params.passengers} passenger(s) · ${params.cabin || 'Economy'}`;
+      renderChips(); render();
+      showToast('Route updated', 'info');
+    });
+
+    // Date chips
+    const DATE_STRIP = ['2026-05-30', '2026-05-31', '2026-06-01', '2026-06-02', '2026-06-03'];
+    let activeDate = params.departDate || '2026-06-01';
+
+    function cheapestForDate() {
+      const matching = FDA.flights.filter(f => f.from === params.from && f.to === params.to);
+      return matching.length ? Math.min(...matching.map(f => f.price)) : null;
+    }
+
+    function renderChips() {
+      const cheap = cheapestForDate();
+      document.getElementById('date-chips').innerHTML = DATE_STRIP.map(d => {
+        const c = formatChip(d);
+        return `<div class="date-chip ${d === activeDate ? 'active' : ''}" data-date="${d}" role="button">
+          <span class="day">${c.day} ${c.dm}</span>
+          <span class="price">${cheap ? formatCurrency(cheap) : '—'}</span>
+        </div>`;
+      }).join('');
+      document.querySelectorAll('.date-chip').forEach(c => {
+        c.addEventListener('click', () => { activeDate = c.dataset.date; renderChips(); render(); });
+      });
+    }
+
+    // Filters
+    function parseDuration(str) {
+      const m = (str || '').match(/(\d+)h\s*(\d+)?/);
+      return m ? parseInt(m[1], 10) * 60 + parseInt(m[2] || '0', 10) : 0;
+    }
+
+    function render() {
+      const stops = document.getElementById('filter-stops').value;
+      const maxPrice = parseInt(document.getElementById('filter-price').value, 10);
+      document.getElementById('max-price-label').textContent = '$' + maxPrice;
+      const tBucket = document.getElementById('filter-time').value;
+      const sort = document.getElementById('filter-sort').value;
+
+      const list = FDA.flights.filter(f => {
+        if (f.from !== params.from) return false;
+        if (f.to   !== params.to)   return false;
+        if (stops !== 'any' && String(f.stops || 0) !== stops) return false;
+        if (f.price > maxPrice) return false;
+        if (tBucket !== 'any' && timeBucket(f.depart) !== tBucket) return false;
+        return true;
+      });
+
+      list.sort((a, b) => {
+        switch (sort) {
+          case 'price-desc':   return b.price - a.price;
+          case 'depart-asc':   return a.depart.localeCompare(b.depart);
+          case 'duration-asc': return parseDuration(a.duration) - parseDuration(b.duration);
+          default:             return a.price - b.price;
+        }
+      });
+
+      const listEl = document.getElementById('flights-list');
+      if (list.length === 0) {
+        listEl.innerHTML = `<div class="text-center" style="padding:var(--gap-xl)">
+          <div style="font-size:2.4rem">🛬</div>
+          <h3 style="margin-top:var(--gap-sm)">No flights match those filters</h3>
+          <p>Try widening the price range or picking different airports.</p>
+        </div>`;
+        return;
+      }
+
+      listEl.innerHTML = list.map(f => `
+        <div class="flight-row">
+          <div><div class="time">${f.depart}</div><div class="text-xs text-light">${f.from}</div></div>
+          <div><div class="time">${f.arrive}</div><div class="text-xs text-light">${f.to}</div></div>
+          <div>
+            <div class="stops">${(f.stops || 0) === 0 ? 'Direct' : f.stops + ' stop'} · ${f.duration}</div>
+            <div class="text-xs text-light">${f.id} · ${f.seats} seats left</div>
+          </div>
+          <div class="price">${formatCurrency(f.price)}</div>
+          <button class="btn btn-primary btn-sm" data-id="${f.id}">Select</button>
+        </div>
+      `).join('');
+
+      listEl.querySelectorAll('button[data-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const flight = getFlightById(btn.dataset.id);
+          saveBooking({ selectedFlight: flight });
+          showToast(`Selected ${flight.id} — ${flight.fromCity} → ${flight.toCity}`, 'success');
+          setTimeout(() => window.location.href = 'seats.html', 300);
+        });
+      });
+    }
+
+    document.getElementById('filter-stops').addEventListener('change', render);
+    document.getElementById('filter-price').addEventListener('input', render);
+    document.getElementById('filter-time').addEventListener('change', render);
+    document.getElementById('filter-sort').addEventListener('change', render);
+
+    renderChips();
+    render();
+  </script>
+</body>
+</html>
