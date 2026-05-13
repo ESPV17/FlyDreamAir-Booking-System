@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlyDreamAir — Book your next journey</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <section class="hero">
+      <div class="container" style="position:relative;z-index:2;width:100%">
+        <div class="grid-2" style="align-items:center;gap:var(--gap-xl)">
+          <div class="animate-fade-up">
+            <h1 class="text-white">Your journey<br/>begins in the clouds.</h1>
+            <div class="divider-teal" style="background:rgba(255,255,255,0.7)"></div>
+            <p class="text-white" style="font-size:1.1rem;max-width:460px">
+              Discover Australia and beyond with FlyDreamAir. Book your next adventure
+              with seamless booking, real-time seat maps, and curated in-flight experiences.
+            </p>
+            <div class="flex gap-md mt-lg">
+              <a href="#search" class="btn btn-white btn-lg">Search Flights</a>
+              <a href="reservations.html" class="btn btn-ghost btn-lg">My Bookings</a>
+            </div>
+          </div>
+
+          <form id="search-form" class="search-box animate-fade-up delay-2">
+            <h3 style="margin-bottom:var(--gap-md)">Search Flights</h3>
+            <div class="search-tabs">
+              <div class="search-tab active" data-trip="return" role="button">Return</div>
+              <div class="search-tab" data-trip="oneway" role="button">One-Way</div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">From</label>
+                <select class="form-control" id="from" required></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">To</label>
+                <select class="form-control" id="to" required></select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Departure date</label>
+                <input class="form-control" type="date" id="departDate" value="2026-06-01" required />
+              </div>
+              <div class="form-group" id="returnDateGroup">
+                <label class="form-label">Return date</label>
+                <input class="form-control" type="date" id="returnDate" value="2026-06-08" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Passengers</label>
+                <select class="form-control" id="passengers">
+                  <option value="1">1 passenger</option>
+                  <option value="2">2 passengers</option>
+                  <option value="3">3 passengers</option>
+                  <option value="4">4 passengers</option>
+                  <option value="5">5 passengers</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cabin class</label>
+                <select class="form-control" id="cabin">
+                  <option>Economy</option>
+                  <option>Business</option>
+                  <option>First</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:var(--gap-md)">Search</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:var(--gap-xl)">
+          <h2>Why fly with us?</h2>
+          <div class="divider-teal" style="margin:var(--gap-sm) auto var(--gap-md)"></div>
+          <p style="max-width:600px;margin:0 auto">Modern aircraft, comfortable seats, and award-winning in-flight service.</p>
+        </div>
+        <div class="grid-3" id="features"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="main.js"></script>
+  <script>
+    mountChrome('home');
+
+    // Populate airport selects
+    const fromSel = document.getElementById('from');
+    const toSel   = document.getElementById('to');
+    FDA.airports.forEach(a => {
+      fromSel.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
+      toSel.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
+    });
+    fromSel.value = 'SYD';
+    toSel.value = 'MEL';
+
+    // Trip type tabs
+    let tripType = 'return';
+    document.querySelectorAll('.search-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.search-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tripType = tab.dataset.trip;
+        document.getElementById('returnDateGroup').style.display = tripType === 'return' ? '' : 'none';
+      });
+    });
+
+    // Feature cards
+    const features = [
+      { icon: '🌏', title: 'Global Network', desc: '120+ destinations across Australia, Asia, and beyond.' },
+      { icon: '🛋️', title: 'Comfort First', desc: 'Pick the perfect seat with our interactive seat map.' },
+      { icon: '🍽️', title: 'Tailored Add-ons', desc: 'Choose meals, drinks, and extras that match your style.' },
+    ];
+    document.getElementById('features').innerHTML = features.map(f => `
+      <div class="card"><div class="card-body text-center">
+        <div style="font-size:2.4rem">${f.icon}</div>
+        <h3 style="margin-top:var(--gap-sm)">${f.title}</h3>
+        <p>${f.desc}</p>
+      </div></div>
+    `).join('');
+
+    // Submit
+    document.getElementById('search-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const from = fromSel.value, to = toSel.value;
+      if (from === to) return showToast('Origin and destination must be different', 'warning');
+      const passengers = parseInt(document.getElementById('passengers').value, 10);
+      saveBooking({
+        searchParams: {
+          tripType, from, to,
+          departDate: document.getElementById('departDate').value,
+          returnDate: document.getElementById('returnDate').value,
+          passengers,
+          cabin: document.getElementById('cabin').value,
+        },
+        passengers: Array.from({ length: passengers }, (_, i) => ({ name: `Passenger ${i + 1}`, seat: null })),
+        seats: [],
+        services: {},
+        selectedFlight: null,
+      });
+      window.location.href = 'search.html';
+    });
+  </script>
+</body>
+</html>
