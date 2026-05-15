@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add-ons — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .addons-table { width:100%; border-collapse:collapse; }
+    .addons-table th {
+      padding:10px 14px; text-align:center;
+      font-family:var(--font-display); font-size:0.8rem; font-weight:700;
+      color:var(--text-light); text-transform:uppercase; letter-spacing:0.05em;
+      border-bottom:2px solid var(--grey-light);
+    }
+    .addons-table th:first-child { text-align:left; }
+    .addons-table td {
+      padding:10px 14px; text-align:center;
+      border-bottom:1px solid var(--grey-light); vertical-align:middle;
+    }
+    .addons-table td:first-child { text-align:left; font-family:var(--font-display); font-weight:600; font-size:0.9rem; }
+    .addons-table tr:last-child td { border-bottom:none; }
+    .addons-table select.form-control { min-width:120px; font-size:0.85rem; padding:8px 12px; }
+
+    .cost-table { width:100%; border-collapse:collapse; }
+    .cost-table th {
+      padding:8px 12px; text-align:center;
+      font-family:var(--font-display); font-size:0.75rem; font-weight:700;
+      color:white; background:var(--sky-blue-dark);
+    }
+    .cost-table th:first-child { text-align:left; }
+    .cost-table td {
+      padding:8px 12px; text-align:center;
+      font-size:0.85rem; color:var(--text-mid);
+      border-bottom:1px solid var(--grey-light);
+    }
+    .cost-table td:first-child { text-align:left; font-weight:600; font-family:var(--font-display); }
+    .cost-table tr.total-row td {
+      font-family:var(--font-display); font-weight:700;
+      color:var(--text-dark); background:var(--grey-light);
+      border-top:2px solid var(--sky-blue-light);
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container">
+        <h1>Add-Ons</h1>
+        <p id="flight-label">Customise your experience</p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+
+        <div class="steps mb-md">
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Search</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Choose Flight</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Seats</span></div>
+          <div class="step-line"></div>
+          <div class="step active"><div class="step-num">4</div><span class="step-label">Add-ons</span></div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-num">5</div><span class="step-label">Payment</span></div>
+        </div>
+
+        <!-- Per-passenger selection table -->
+        <div class="card mb-md">
+          <div class="card-body" style="overflow-x:auto">
+            <table class="addons-table" id="addons-table"></table>
+          </div>
+        </div>
+
+        <!-- Cost breakdown -->
+        <div class="card mb-md">
+          <div class="card-header"><h3>Cost Breakdown</h3></div>
+          <div style="overflow-x:auto">
+            <table class="cost-table" id="cost-table"></table>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:var(--gap-md);justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="window.location.href='seats.html'">← Back to Seats</button>
+          <button class="btn btn-primary btn-lg" id="continue-btn">Continue to Payment</button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+  <script src="main.js"></script>
+  <script>
+    mountChrome('search');
+    const booking    = loadBooking();
+    const flight     = booking.selectedFlight;
+    const passengers = booking.passengers || [{ name: 'Passenger 1' }];
+    const n          = passengers.length;
+
+    document.getElementById('flight-label').textContent =
+      flight ? `FLIGHT ${flight.from} TO ${flight.to} ${flight.depart}` : 'Customise your experience';
+
+    // Options per category
+    const mealOptions = [
+      { id:'none',           name:'No Meal',         price:0  },
+      { id:'meal-standard',  name:'Standard Meal',   price:18 },
+      { id:'meal-vegetarian',name:'Vegetarian Meal', price:18 },
+      { id:'meal-kids',      name:'Kids Meal',       price:14 },
+    ];
+    const drinkOptions = [
+      { id:'none',        name:'No Drink',    price:0  },
+      { id:'drink-soft',  name:'Soft Drink',  price:4  },
+      { id:'drink-beer',  name:'Beer',        price:9  },
+      { id:'drink-wine',  name:'Wine',        price:11 },
+    ];
+    const baggageOptions = [
+      { id:'none',        name:'No Baggage',  price:0  },
+      { id:'bag-20',      name:'20kg Bag',    price:35 },
+      { id:'bag-30',      name:'30kg Bag',    price:50 },
+    ];
+
+    // State: selections[pIdx] = { meal, drink, baggage }
+    const selections = passengers.map(() => ({ meal:'none', drink:'none', baggage:'none' }));
+
+    function optionHtml(opts, pIdx, category) {
+      return `<select class="form-control" data-pax="${pIdx}" data-cat="${category}">
+        ${opts.map(o => `<option value="${o.id}" data-price="${o.price}">${o.name}${o.price>0?' (+'+formatCurrency(o.price)+')':''}</option>`).join('')}
+      </select>`;
+    }
+
+    function renderAddonsTable() {
+      const table = document.getElementById('addons-table');
+      // Header
+      let html = `<thead><tr><th>Add-On</th>${passengers.map((_,i) => `<th>Passenger ${i+1}</th>`).join('')}</tr></thead><tbody>`;
+      // Meal row
+      html += `<tr><td>🍽️ Meal</td>${passengers.map((_,i) => `<td>${optionHtml(mealOptions, i, 'meal')}</td>`).join('')}</tr>`;
+      // Drink row
+      html += `<tr><td>🥤 Drink</td>${passengers.map((_,i) => `<td>${optionHtml(drinkOptions, i, 'drink')}</td>`).join('')}</tr>`;
+      // Baggage row
+      html += `<tr><td>🧳 Baggage</td>${passengers.map((_,i) => `<td>${optionHtml(baggageOptions, i, 'baggage')}</td>`).join('')}</tr>`;
+      html += '</tbody>';
+      table.innerHTML = html;
+
+      // Restore selections
+      table.querySelectorAll('select').forEach(sel => {
+        const pIdx = parseInt(sel.dataset.pax);
+        const cat  = sel.dataset.cat;
+        sel.value  = selections[pIdx][cat];
+        sel.addEventListener('change', () => {
+          selections[pIdx][cat] = sel.value;
+          renderCostTable();
+        });
+      });
+    }
+
+    function getPrice(opts, id) {
+      return (opts.find(o => o.id === id) || {}).price || 0;
+    }
+
+    function renderCostTable() {
+      const flightCost = flight ? flight.price : 0;
+      const seatFee    = booking.seatFee || 0;
+      const table      = document.getElementById('cost-table');
+
+      // Column headers
+      let html = `<thead><tr><th>Passenger</th><th>Meal</th><th>Drink</th><th>Baggage</th><th>Seat</th><th>Total</th></tr></thead><tbody>`;
+
+      let grandTotal = flightCost * n + seatFee;
+      const colTotals = { meal:0, drink:0, baggage:0 };
+
+      passengers.forEach((p, i) => {
+        const mealP  = getPrice(mealOptions,    selections[i].meal);
+        const drinkP = getPrice(drinkOptions,   selections[i].drink);
+        const bagP   = getPrice(baggageOptions, selections[i].baggage);
+        const seatP  = seatFee / n;
+        const rowTotal = flightCost + mealP + drinkP + bagP + seatP;
+        colTotals.meal    += mealP;
+        colTotals.drink   += drinkP;
+        colTotals.baggage += bagP;
+        grandTotal += mealP + drinkP + bagP;
+
+        html += `<tr>
+          <td>Passenger ${i+1}${(booking.seats||[])[i] ? ' · Seat '+(booking.seats[i]) : ''}</td>
+          <td>${mealP > 0 ? formatCurrency(mealP) : '—'}</td>
+          <td>${drinkP > 0 ? formatCurrency(drinkP) : '—'}</td>
+          <td>${bagP > 0 ? formatCurrency(bagP) : '—'}</td>
+          <td>${seatFee > 0 ? formatCurrency(seatP) : '—'}</td>
+          <td style="font-weight:700;color:var(--sky-blue-dark)">${formatCurrency(rowTotal)}</td>
+        </tr>`;
+      });
+
+      const addonsTotal = colTotals.meal + colTotals.drink + colTotals.baggage + seatFee;
+      grandTotal = flightCost * n + addonsTotal;
+
+      html += `<tr class="total-row">
+        <td>TOTAL</td>
+        <td>${formatCurrency(colTotals.meal)}</td>
+        <td>${formatCurrency(colTotals.drink)}</td>
+        <td>${formatCurrency(colTotals.baggage)}</td>
+        <td>${seatFee > 0 ? formatCurrency(seatFee) : '—'}</td>
+        <td>${formatCurrency(grandTotal)}</td>
+      </tr>`;
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    renderAddonsTable();
+    renderCostTable();
+
+    document.getElementById('continue-btn').addEventListener('click', () => {
+      // Build services object for payment
+      const svcSummary = passengers.map((p, i) => ({
+        passenger: i + 1,
+        meal:    selections[i].meal,
+        drink:   selections[i].drink,
+        baggage: selections[i].baggage,
+        mealCost:    getPrice(mealOptions,    selections[i].meal),
+        drinkCost:   getPrice(drinkOptions,   selections[i].drink),
+        baggageCost: getPrice(baggageOptions, selections[i].baggage),
+      }));
+      const addonsTotal = svcSummary.reduce((s,r) => s + r.mealCost + r.drinkCost + r.baggageCost, 0) + (booking.seatFee||0);
+      saveBooking({ perPassengerServices: svcSummary, addonsTotal });
+      window.location.href = 'payment.html';
+    });
+  </script>
+</body>
+</html>
