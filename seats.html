@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Seats — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Plane illustration */
+    .plane-wrap { display:flex; flex-direction:column; align-items:center; }
+    .plane-nose {
+      width:160px; height:80px;
+      background:linear-gradient(180deg, #e8f4f8 0%, #d0e8f0 100%);
+      border-radius:50% 50% 0 0 / 100% 100% 0 0;
+      border:2px solid #b0cdd8; border-bottom:none;
+      display:flex; align-items:flex-end; justify-content:center;
+      padding-bottom:8px;
+    }
+    .plane-body {
+      width:160px;
+      background:linear-gradient(180deg, #d0e8f0 0%, #c4e0ec 100%);
+      border-left:2px solid #b0cdd8; border-right:2px solid #b0cdd8;
+      padding:0 8px;
+    }
+    .plane-tail {
+      width:160px; height:40px;
+      background:linear-gradient(180deg, #c4e0ec 0%, #b8d8e8 100%);
+      border-radius:0 0 40% 40%;
+      border:2px solid #b0cdd8; border-top:none;
+      position:relative;
+    }
+    .plane-tail::before, .plane-tail::after {
+      content:''; position:absolute; top:0;
+      width:50px; height:30px;
+      background:linear-gradient(135deg, #c4e0ec, #b8d8e8);
+      border:2px solid #b0cdd8;
+    }
+    .plane-tail::before { left:-52px; border-radius:0 0 0 60%; transform:skewX(-10deg); }
+    .plane-tail::after  { right:-52px; border-radius:0 0 60% 0; transform:skewX(10deg); }
+
+    .cabin-section { padding:6px 4px; }
+    .cabin-label {
+      text-align:center; font-family:var(--font-display);
+      font-size:0.65rem; font-weight:700; color:var(--text-mid);
+      letter-spacing:0.08em; text-transform:uppercase;
+      margin-bottom:4px;
+    }
+    .cabin-seats { display:flex; flex-direction:column; gap:4px; align-items:center; }
+    .seat-row-plane { display:flex; gap:3px; align-items:center; }
+    .seat-plane {
+      width:28px; height:28px; border-radius:5px 5px 3px 3px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.6rem; font-weight:700; font-family:var(--font-display);
+      cursor:pointer; border:2px solid transparent;
+      transition:all var(--transition-fast); flex-shrink:0;
+    }
+    .seat-plane.available  { background:#e8f0f4; color:#6a8a98; }
+    .seat-plane.available:hover { background:rgba(91,196,232,0.25); border-color:var(--sky-blue); color:var(--sky-blue-dark); }
+    .seat-plane.taken      { background:#d4b8a8; color:#a08070; cursor:not-allowed; }
+    .seat-plane.selected   { background:var(--teal); color:white; border-color:var(--teal-dark); }
+    .seat-aisle-plane { width:12px; }
+    .cabin-divider { height:1px; background:rgba(176,205,216,0.5); margin:4px 8px; }
+
+    /* Selection panel */
+    .selection-row {
+      display:grid; grid-template-columns:1fr auto auto;
+      align-items:center; gap:var(--gap-md);
+      padding:10px var(--gap-md);
+      border-bottom:1px solid var(--grey-light);
+      font-size:0.9rem;
+    }
+    .selection-row:last-child { border-bottom:none; }
+    .seat-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius:6px;
+      background:var(--teal); color:white;
+      font-family:var(--font-display); font-weight:700; font-size:0.85rem;
+    }
+    .seat-badge.empty {
+      background:var(--grey-light); color:var(--text-light);
+    }
+  </style>
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container">
+        <h1>Select Your Seat</h1>
+        <p id="flight-summary"></p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+
+        <div class="steps mb-md">
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Search</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Choose Flight</span></div>
+          <div class="step-line"></div>
+          <div class="step active"><div class="step-num">3</div><span class="step-label">Seats</span></div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-num">4</div><span class="step-label">Add-ons</span></div>
+          <div class="step-line"></div>
+          <div class="step"><div class="step-num">5</div><span class="step-label">Payment</span></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:var(--gap-xl);align-items:start">
+
+          <!-- Plane visual -->
+          <div class="card" style="overflow:visible">
+            <div class="card-body" style="padding:var(--gap-md)">
+              <div class="plane-wrap" id="plane-wrap">
+                <div class="plane-nose"><span style="font-size:0.6rem;color:var(--text-light);font-family:var(--font-display);font-weight:700">NOSE</span></div>
+                <div class="plane-body" id="plane-body"></div>
+                <div class="plane-tail"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selection + summary -->
+          <div style="display:flex;flex-direction:column;gap:var(--gap-md)">
+
+            <!-- Legend -->
+            <div class="card">
+              <div class="card-body" style="padding:var(--gap-md)">
+                <div style="font-family:var(--font-display);font-weight:700;font-size:0.85rem;color:var(--text-dark);margin-bottom:var(--gap-sm)" id="flight-label">FLIGHT</div>
+                <div class="seat-legend">
+                  <div class="seat-legend-item"><div class="legend-dot" style="background:#e8f0f4;border:1px solid #b0cdd8"></div> Available</div>
+                  <div class="seat-legend-item"><div class="legend-dot" style="background:#d4b8a8"></div> Taken</div>
+                  <div class="seat-legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Selected</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Your selection -->
+            <div class="card">
+              <div class="card-header"><h3>Your Selection</h3></div>
+              <div id="selection-list"></div>
+              <div class="card-footer">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--gap-md)">
+                  <span style="font-family:var(--font-display);font-weight:700">Total</span>
+                  <span style="font-family:var(--font-display);font-weight:700;color:var(--sky-blue-dark)" id="seat-total">$0</span>
+                </div>
+                <button class="btn btn-primary btn-full btn-lg" id="continue-btn" disabled>Continue to Add-ons</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+  <script src="main.js"></script>
+  <script>
+    mountChrome('search');
+    const booking        = loadBooking();
+    const flight         = booking.selectedFlight;
+    const passengerCount = (booking.passengers||[]).length || 1;
+    const SEAT_FEE       = 15;
+
+    if (!flight) {
+      showToast('No flight selected — redirecting...','warning');
+      setTimeout(() => window.location.href='search.html', 1500);
+    }
+
+    document.getElementById('flight-summary').textContent =
+      flight ? `${flight.id} · ${flight.fromCity} → ${flight.toCity} · ${flight.depart} – ${flight.arrive}` : '';
+    document.getElementById('flight-label').textContent =
+      flight ? `FLIGHT ${flight.from} TO ${flight.to} ${flight.depart}` : 'FLIGHT';
+
+    const selectedSeats  = {};
+    let   currentPassenger = 0;
+
+    // Determine which cabin is allowed based on search params
+    const cabin = ((booking.searchParams || {}).cabin || 'Economy').toLowerCase();
+    const cabinMap = {
+      'first':    { start: 1,  end: 3  },
+      'business': { start: 4,  end: 8  },
+      'economy':  { start: 9,  end: 30 },
+    };
+    const allowedCabin = cabinMap[cabin] || cabinMap['economy'];
+
+    // Build seat data
+    const { takenSeats } = generateSeatMap(30);
+
+    function buildCabin(label, startRow, endRow, cols) {
+      const isAllowed = (startRow === allowedCabin.start);
+      const section = document.createElement('div');
+      section.className = 'cabin-section';
+      section.innerHTML = `<div class="cabin-label" style="${isAllowed?'color:var(--sky-blue-dark);font-size:0.75rem':'opacity:0.45;font-size:0.75rem'}">${label}${isAllowed?' ✓ Your Class':' — Not available for your ticket'}</div>`;
+      const seatsWrap = document.createElement('div');
+      seatsWrap.className = 'cabin-seats';
+      if (!isAllowed) seatsWrap.style.opacity = '0.3';
+      for (let r = startRow; r <= endRow; r++) {
+        const row = document.createElement('div');
+        row.className = 'seat-row-plane';
+        const half = Math.floor(cols.length / 2);
+        cols.forEach((c, i) => {
+          if (i === half) {
+            const aisle = document.createElement('div');
+            aisle.className = 'seat-aisle-plane';
+            row.appendChild(aisle);
+          }
+          const seatId = `${r}${c}`;
+          const isTaken = takenSeats.has(seatId);
+          const isSelected = Object.values(selectedSeats).includes(seatId);
+          const seat = document.createElement('div');
+          seat.className = `seat-plane ${isTaken?'taken':isSelected?'selected':'available'}`;
+          seat.dataset.seat = seatId;
+          seat.textContent = seatId;
+          if (!isTaken && isAllowed) {
+            seat.addEventListener('click', () => handleSeatClick(seat, seatId));
+          } else if (!isAllowed) {
+            seat.style.cursor = 'not-allowed';
+          }
+          row.appendChild(seat);
+        });
+        seatsWrap.appendChild(row);
+      }
+      section.appendChild(seatsWrap);
+      return section;
+    }
+
+    function handleSeatClick(el, seatId) {
+      if (Object.values(selectedSeats).includes(seatId)) {
+        // Deselect — find which passenger had it
+        for (const [pIdx, s] of Object.entries(selectedSeats)) {
+          if (s === seatId) {
+            delete selectedSeats[pIdx];
+            el.className = 'seat-plane available';
+            // Move current passenger back if needed
+            if (parseInt(pIdx) < currentPassenger) currentPassenger = parseInt(pIdx);
+            break;
+          }
+        }
+        updateUI();
+        return;
+      }
+      if (Object.keys(selectedSeats).length >= passengerCount) {
+        return showToast('All passengers already have seats','warning');
+      }
+      // Remove previous selection for current passenger
+      const prev = selectedSeats[currentPassenger];
+      if (prev) {
+        const prevEl = document.querySelector(`[data-seat="${prev}"]`);
+        if (prevEl) prevEl.className = 'seat-plane available';
+      }
+      selectedSeats[currentPassenger] = seatId;
+      el.className = 'seat-plane selected';
+      if (currentPassenger < passengerCount - 1) currentPassenger++;
+      updateUI();
+    }
+
+    function updateUI() {
+      // Update selection list
+      let listHtml = '';
+      let total = 0;
+      for (let i = 0; i < passengerCount; i++) {
+        const seat = selectedSeats[i];
+        const cost = seat ? SEAT_FEE : 0;
+        total += cost;
+        listHtml += `<div class="selection-row">
+          <span style="font-family:var(--font-display);font-weight:600">Passenger ${i+1}</span>
+          <div class="seat-badge ${seat?'':'empty'}">${seat||'—'}</div>
+          <span style="font-family:var(--font-display);font-weight:600;color:var(--sky-blue-dark)">${seat?formatCurrency(SEAT_FEE):'—'}</span>
+        </div>`;
+      }
+      listHtml += ``;
+      document.getElementById('selection-list').innerHTML = listHtml;
+      document.getElementById('seat-total').textContent = formatCurrency(total);
+
+      const allDone = Object.keys(selectedSeats).length >= passengerCount;
+      document.getElementById('continue-btn').disabled = !allDone;
+    }
+
+    const body = document.getElementById('plane-body');
+    body.appendChild(buildCabin('First Class',    1,  3,  ['A','B','C','D']));
+    body.insertAdjacentHTML('beforeend','<div class="cabin-divider"></div>');
+    body.appendChild(buildCabin('Business Class', 4,  8,  ['A','B','C','D']));
+    body.insertAdjacentHTML('beforeend','<div class="cabin-divider"></div>');
+    body.appendChild(buildCabin('Economy Class',  9,  30, ['A','B','C','D','E','F']));
+
+    updateUI();
+
+    document.getElementById('continue-btn').addEventListener('click', () => {
+      const passengers = (booking.passengers||[]).map((p,i) => ({ ...p, seat: selectedSeats[i]||null }));
+      saveBooking({ seats: Object.values(selectedSeats), passengers, seatFee: SEAT_FEE * Object.keys(selectedSeats).length });
+      window.location.href = 'services.html';
+    });
+  </script>
+</body>
+</html>
