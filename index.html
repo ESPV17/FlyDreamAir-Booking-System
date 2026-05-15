@@ -13,6 +13,7 @@
     <section class="hero">
       <div class="container" style="position:relative;z-index:2;width:100%">
         <div class="grid-2" style="align-items:center;gap:var(--gap-xl)">
+
           <div class="animate-fade-up">
             <h1 class="text-white">Your journey<br/>begins in the clouds.</h1>
             <div class="divider-teal" style="background:rgba(255,255,255,0.7)"></div>
@@ -21,8 +22,8 @@
               with seamless booking, real-time seat maps, and curated in-flight experiences.
             </p>
             <div class="flex gap-md mt-lg">
-              <a href="#search" class="btn btn-white btn-lg">Search Flights</a>
-              <a href="reservations.html" class="btn btn-ghost btn-lg">My Bookings</a>
+              <a href="search.html" class="btn btn-white btn-lg">Search Flights</a>
+              <a href="reservations.html" class="btn btn-ghost btn-lg hidden" id="hero-bookings-btn">My Bookings</a>
             </div>
           </div>
 
@@ -76,8 +77,9 @@
               </div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:var(--gap-md)">Search</button>
+            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:var(--gap-md)">Search Flights</button>
           </form>
+
         </div>
       </div>
     </section>
@@ -100,17 +102,23 @@
   <script>
     mountChrome('home');
 
-    // Populate airport selects
+    // Show My Bookings button only if logged in
+    if (getUser()) {
+      document.getElementById('hero-bookings-btn').classList.remove('hidden');
+    }
+
+    // Airport selects
     const fromSel = document.getElementById('from');
     const toSel   = document.getElementById('to');
     FDA.airports.forEach(a => {
-      fromSel.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
-      toSel.insertAdjacentHTML('beforeend', `<option value="${a.code}">${a.code} — ${a.city}</option>`);
+      const opt = `<option value="${a.code}">${a.code} — ${a.city}</option>`;
+      fromSel.insertAdjacentHTML('beforeend', opt);
+      toSel.insertAdjacentHTML('beforeend', opt);
     });
     fromSel.value = 'SYD';
-    toSel.value = 'MEL';
+    toSel.value   = 'MEL';
 
-    // Trip type tabs
+    // Trip type toggle
     let tripType = 'return';
     document.querySelectorAll('.search-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -122,37 +130,57 @@
     });
 
     // Feature cards
-    const features = [
-      { icon: '🌏', title: 'Global Network', desc: '120+ destinations across Australia, Asia, and beyond.' },
-      { icon: '🛋️', title: 'Comfort First', desc: 'Pick the perfect seat with our interactive seat map.' },
+    document.getElementById('features').innerHTML = [
+      { icon: '🌏', title: 'Global Network',   desc: '120+ destinations across Australia, Asia, and beyond.' },
+      { icon: '🛋️', title: 'Comfort First',    desc: 'Pick the perfect seat with our interactive seat map.' },
       { icon: '🍽️', title: 'Tailored Add-ons', desc: 'Choose meals, drinks, and extras that match your style.' },
-    ];
-    document.getElementById('features').innerHTML = features.map(f => `
-      <div class="card"><div class="card-body text-center">
-        <div style="font-size:2.4rem">${f.icon}</div>
-        <h3 style="margin-top:var(--gap-sm)">${f.title}</h3>
-        <p>${f.desc}</p>
-      </div></div>
+    ].map(f => `
+      <div class="card animate-fade-up">
+        <div class="card-body text-center">
+          <div style="font-size:2.4rem">${f.icon}</div>
+          <h3 style="margin-top:var(--gap-sm)">${f.title}</h3>
+          <p>${f.desc}</p>
+        </div>
+      </div>
     `).join('');
 
-    // Submit
+    // Return date can't be before departure
+    const departDateEl = document.getElementById('departDate');
+    const returnDateEl = document.getElementById('returnDate');
+
+    // Set initial min
+    returnDateEl.min = departDateEl.value;
+
+    departDateEl.addEventListener('change', e => {
+      returnDateEl.min = e.target.value;
+      if (returnDateEl.value < e.target.value) returnDateEl.value = e.target.value;
+    });
+
+    returnDateEl.addEventListener('change', e => {
+      if (e.target.value < departDateEl.value) {
+        e.target.value = departDateEl.value;
+        showToast('Return date cannot be before departure date', 'warning');
+      }
+    });
+
+    // Form submit
     document.getElementById('search-form').addEventListener('submit', e => {
       e.preventDefault();
       const from = fromSel.value, to = toSel.value;
       if (from === to) return showToast('Origin and destination must be different', 'warning');
+      const departDate = departDateEl.value;
+      const returnDate = returnDateEl.value;
+      if (tripType === 'return' && returnDate < departDate) {
+        return showToast('Return date cannot be before departure date', 'warning');
+      }
       const passengers = parseInt(document.getElementById('passengers').value, 10);
       saveBooking({
         searchParams: {
-          tripType, from, to,
-          departDate: document.getElementById('departDate').value,
-          returnDate: document.getElementById('returnDate').value,
-          passengers,
+          tripType, from, to, departDate, returnDate, passengers,
           cabin: document.getElementById('cabin').value,
         },
-        passengers: Array.from({ length: passengers }, (_, i) => ({ name: `Passenger ${i + 1}`, seat: null })),
-        seats: [],
-        services: {},
-        selectedFlight: null,
+        passengers: Array.from({ length: passengers }, (_, i) => ({ name: `Passenger ${i+1}`, seat: null })),
+        seats: [], services: {}, selectedFlight: null,
       });
       window.location.href = 'search.html';
     });
