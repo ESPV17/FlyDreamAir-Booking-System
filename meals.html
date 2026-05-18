@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add-ons — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container" style="position:relative">
+        <h1>Add-ons</h1>
+        <p id="flight-summary"></p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+        <div id="passenger-grid" style="margin-bottom:var(--gap-lg)"></div>
+
+        <div class="side-panel">
+          <h3 style="margin-bottom:var(--gap-md)">Order summary</h3>
+          <div class="summary-row"><span class="label" id="flights-label"></span><span class="value" id="flights-total"></span></div>
+          <div class="summary-row"><span class="label">Seats</span><span class="value" id="seats-total"></span></div>
+          <div class="summary-row"><span class="label">Add-ons</span><span class="value" id="addons-total"></span></div>
+          <div class="total-row"><span>Total</span><span id="grand-total"></span></div>
+          <div class="flex gap-md mt-md">
+            <a class="btn btn-secondary" href="seats.html">Back</a>
+            <button class="btn btn-primary" style="margin-left:auto" id="confirm-btn">Confirm booking</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="main.js"></script>
+  <script>
+    mountChrome('search');
+
+    const booking = loadBooking();
+    if (!booking.selectedFlight) {
+      showToast('Please pick a flight first', 'warning');
+      setTimeout(() => window.location.href = 'index.html', 600);
+    }
+    const flight = booking.selectedFlight || {};
+    const passengers = booking.passengers || [];
+    document.getElementById('flight-summary').textContent =
+      `Flight ${flight.from} → ${flight.to} · ${flight.depart}`;
+
+    let picks = booking.services && Object.keys(booking.services).length
+      ? booking.services
+      : passengers.reduce((acc, _, i) => { acc[i] = { meal: '', drink: '', baggage: '' }; return acc; }, {});
+
+    const CATEGORIES = ['meal', 'drink', 'baggage'];
+
+    function seatPriceById(seatId) {
+      if (!seatId) return 0;
+      const row = parseInt(seatId, 10);
+      if (row <= 2) return 80;
+      if (row <= 6) return 40;
+      return 15;
+    }
+
+    function optionsFor(cat) {
+      return FDA.services.filter(s => s.category === cat);
+    }
+
+    function renderPassengers() {
+      const cols = Math.min(passengers.length, 3);
+      const grid = document.getElementById('passenger-grid');
+      grid.className = 'grid-' + cols;
+      grid.innerHTML = passengers.map((p, i) => `
+        <div class="passenger-card">
+          <h4>Passenger ${i + 1}${p.seat ? ` <span style="color:var(--text-light)">· seat ${p.seat}</span>` : ''}</h4>
+          ${CATEGORIES.map(cat => `
+            <div class="form-group">
+              <label class="form-label">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
+              <select class="form-control" data-pax="${i}" data-cat="${cat}">
+                <option value="">— None —</option>
+                ${optionsFor(cat).map(s => `
+                  <option value="${s.id}" ${picks[i]?.[cat] === s.id ? 'selected' : ''}>
+                    ${s.icon} ${s.name} · ${formatCurrency(s.price)}
+                  </option>`).join('')}
+              </select>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+      grid.querySelectorAll('select').forEach(sel => {
+        sel.addEventListener('change', () => {
+          const i = sel.dataset.pax, c = sel.dataset.cat;
+          picks[i] = picks[i] || {};
+          picks[i][c] = sel.value;
+          renderTotals();
+        });
+      });
+    }
+
+    function renderTotals() {
+      const flightTotal = (flight.price || 0) * passengers.length;
+      const seatTotal   = passengers.reduce((s, p) => s + seatPriceById(p.seat), 0);
+      const addonsTotal = passengers.reduce((sum, _, i) => {
+        const p = picks[i] || {};
+        return sum + Object.values(p).reduce((a, sid) => {
+          const svc = FDA.services.find(x => x.id === sid);
+          return a + (svc ? svc.price : 0);
+        }, 0);
+      }, 0);
+      const grand = flightTotal + seatTotal + addonsTotal;
+      document.getElementById('flights-label').textContent = `Flights (${passengers.length} × ${formatCurrency(flight.price)})`;
+      document.getElementById('flights-total').textContent = formatCurrency(flightTotal);
+      document.getElementById('seats-total').textContent   = formatCurrency(seatTotal);
+      document.getElementById('addons-total').textContent  = formatCurrency(addonsTotal);
+      document.getElementById('grand-total').textContent   = formatCurrency(grand);
+      window.__grandTotal = grand;
+    }
+
+    document.getElementById('confirm-btn').addEventListener('click', () => {
+      const ref = generateRef();
+      const reservation = {
+        id: ref,
+        flight: flight.id,
+        from: flight.from, fromCity: flight.fromCity,
+        to:   flight.to,   toCity:   flight.toCity,
+        date: flight.date, depart: flight.depart, arrive: flight.arrive,
+        tripType: booking.searchParams?.tripType === 'oneway' ? 'OW' : 'R',
+        passengers: passengers.map(p => ({ name: p.name, seat: p.seat })),
+        services: picks,
+        status: 'approved',
+        total: window.__grandTotal,
+      };
+      saveReservation(reservation);
+      clearBooking();
+      showToast(`Booking ${ref} confirmed!`, 'success', 4000);
+      setTimeout(() => window.location.href = 'reservations.html', 600);
+    });
+
+    renderPassengers();
+    renderTotals();
+  </script>
+</body>
+</html>

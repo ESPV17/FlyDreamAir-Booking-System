@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login / Sign Up — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container" style="position:relative">
+        <h1>Welcome back</h1>
+        <p>Sign in or create an account to manage your bookings.</p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+        <div class="auth-split">
+          <form id="login-form">
+            <h3>Login</h3>
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input class="form-control" type="text" name="username" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input class="form-control" type="password" name="password" required />
+            </div>
+            <button type="submit" class="btn btn-primary btn-full mt-md">Login</button>
+          </form>
+
+          <div class="vr"></div>
+
+          <form id="signup-form">
+            <h3>Sign Up</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">First name</label>
+                <input class="form-control" type="text" name="firstName" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last name</label>
+                <input class="form-control" type="text" name="lastName" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" name="email" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone number</label>
+              <input class="form-control" type="tel" name="phone" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of birth</label>
+              <input class="form-control" type="date" name="dob" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <input class="form-control" type="text" name="address" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input class="form-control" type="password" name="password" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm password</label>
+                <input class="form-control" type="password" name="confirm" required />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full mt-md">Sign Up</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="main.js"></script>
+  <script>
+    mountChrome('');
+
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const username = fd.get('username').trim();
+      if (!username) return;
+      userStorage.set({ username, firstName: username });
+      showToast(`Welcome back, ${username}!`, 'success');
+      setTimeout(() => window.location.href = 'reservations.html', 500);
+    });
+
+    document.getElementById('signup-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const email = fd.get('email');
+      if (!validateEmail(email)) {
+        return showToast('Please enter a valid email address', 'warning');
+      }
+      if (fd.get('password') !== fd.get('confirm')) {
+        return showToast('Passwords do not match', 'warning');
+      }
+      const user = {
+        firstName: fd.get('firstName'),
+        lastName:  fd.get('lastName'),
+        email,
+        phone:     fd.get('phone'),
+        dob:       fd.get('dob'),
+        address:   fd.get('address'),
+      };
+      userStorage.set(user);
+      showToast(`Account created — welcome, ${user.firstName}!`, 'success');
+      setTimeout(() => window.location.href = 'reservations.html', 500);
+    });
+  </script>
+</body>
+</html>

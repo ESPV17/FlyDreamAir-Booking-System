@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Bookings — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container" style="position:relative">
+        <h1>My Bookings</h1>
+        <p id="user-line">USER 1234</p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+        <div id="bookings-area"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="main.js"></script>
+  <script>
+    mountChrome('reservations');
+
+    const STATUS_BADGE = { approved: 'badge-green', tbc: 'badge-grey', cancelled: 'badge-red' };
+    const STATUS_LABEL = { approved: 'APPROVED', tbc: 'TBC', cancelled: 'CANCELLED' };
+
+    const user = userStorage.get();
+    if (user) document.getElementById('user-line').textContent = `User ${user.firstName || user.username}`;
+
+    function render() {
+      const area = document.getElementById('bookings-area');
+      const list = getReservations();
+      if (!list.length) {
+        area.innerHTML = `<div class="card"><div class="card-body text-center" style="padding:var(--gap-xl)">
+          <div style="font-size:2.4rem">🎫</div>
+          <h3 style="margin-top:var(--gap-sm)">No bookings yet</h3>
+          <p>When you book a flight it will appear here.</p>
+        </div></div>`;
+        return;
+      }
+      area.innerHTML = `
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th>Booking #</th><th>Route</th><th>Date</th>
+              <th>Status</th><th>Total</th><th style="width:200px">Actions</th>
+            </tr></thead>
+            <tbody>
+              ${list.map(r => `
+                <tr>
+                  <td><strong>${r.id}</strong></td>
+                  <td>${r.from} – ${r.to} | ${r.tripType || 'R'}</td>
+                  <td>${formatDateShort(r.date)}</td>
+                  <td><span class="badge ${STATUS_BADGE[r.status] || 'badge-grey'}">${STATUS_LABEL[r.status] || (r.status || '').toUpperCase()}</span></td>
+                  <td>${formatCurrency(r.total)}</td>
+                  <td>
+                    <div class="flex gap-sm">
+                      <button class="btn btn-secondary btn-sm modify-btn" data-id="${r.id}" ${r.status === 'cancelled' ? 'disabled' : ''}>Modify</button>
+                      <button class="btn btn-secondary btn-sm cancel-btn" data-id="${r.id}" style="color:var(--danger);border-color:var(--danger)">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="legend-mini">
+          <span>R = Return</span><span>OW = One-way</span>
+        </div>
+      `;
+
+      area.querySelectorAll('.modify-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          window.location.href = `modify.html?id=${encodeURIComponent(b.dataset.id)}`;
+        });
+      });
+      area.querySelectorAll('.cancel-btn').forEach(b => {
+        b.addEventListener('click', () => openCancelModal(b.dataset.id));
+      });
+    }
+
+    function openCancelModal(id) {
+      const r = getReservation(id);
+      if (!r) return;
+      const overlay = createElement('div', 'modal-overlay');
+      overlay.innerHTML = `
+        <div class="modal">
+          <h3>Cancel booking ${r.id}?</h3>
+          <div class="body">
+            You're about to cancel your <strong>${r.from} → ${r.to}</strong> flight on
+            <strong>${formatDateShort(r.date)}</strong>. This action can't be undone in the MVP.
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary" id="keep-btn">Keep booking</button>
+            <button class="btn btn-primary" style="background:var(--danger)" id="confirm-cancel">Cancel booking</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const close = () => overlay.remove();
+      overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+      overlay.querySelector('#keep-btn').addEventListener('click', close);
+      overlay.querySelector('#confirm-cancel').addEventListener('click', () => {
+        cancelReservation(id);
+        showToast(`Booking ${id} cancelled`, 'success');
+        close();
+        render();
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>
