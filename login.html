@@ -3,78 +3,103 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login / Sign Up — FlyDreamAir</title>
+  <title>Login — FlyDreamAir</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="navbar-mount"></div>
 
   <main class="app-main">
-    <header class="page-header">
-      <div class="container" style="position:relative">
-        <h1>Welcome back</h1>
-        <p>Sign in or create an account to manage your bookings.</p>
-      </div>
-    </header>
+    <section class="section" style="min-height:calc(100vh - var(--nav-height));display:flex;align-items:center;">
+      <div class="container" style="max-width:900px">
 
-    <section class="section-sm">
-      <div class="container">
-        <div class="auth-split">
-          <form id="login-form">
-            <h3>Login</h3>
-            <div class="form-group">
-              <label class="form-label">Username</label>
-              <input class="form-control" type="text" name="username" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Password</label>
-              <input class="form-control" type="password" name="password" required />
-            </div>
-            <button type="submit" class="btn btn-primary btn-full mt-md">Login</button>
-          </form>
+        <div style="text-align:center;margin-bottom:var(--gap-xl)">
+          <h2>Welcome to FlyDreamAir</h2>
+          <div class="divider-teal" style="margin:var(--gap-sm) auto"></div>
+        </div>
 
-          <div class="vr"></div>
+        <div style="display:grid;grid-template-columns:1fr 2px 1fr;gap:var(--gap-xl);align-items:start">
 
-          <form id="signup-form">
-            <h3>Sign Up</h3>
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">First name</label>
-                <input class="form-control" type="text" name="firstName" required />
+          <!-- Login -->
+          <div class="card">
+            <div class="card-header"><h3>Login</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">First Name</label>
+                  <input class="form-control" type="text" id="login-first" placeholder="First name" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <input class="form-control" type="text" id="login-last" placeholder="Last name" />
+                </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Last name</label>
-                <input class="form-control" type="text" name="lastName" required />
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" id="login-email" placeholder="Enter your email" />
               </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input class="form-control" type="email" name="email" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone number</label>
-              <input class="form-control" type="tel" name="phone" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Date of birth</label>
-              <input class="form-control" type="date" name="dob" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Address</label>
-              <input class="form-control" type="text" name="address" />
-            </div>
-            <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Password</label>
-                <input class="form-control" type="password" name="password" required />
+                <input class="form-control" type="password" id="login-password" placeholder="Enter your password" />
               </div>
-              <div class="form-group">
-                <label class="form-label">Confirm password</label>
-                <input class="form-control" type="password" name="confirm" required />
-              </div>
+              <button class="btn btn-primary btn-full btn-lg mt-md" id="login-btn">Login</button>
+              <p class="text-center text-sm mt-md" style="color:var(--text-light)">
+                <a href="#" style="color:var(--sky-blue-dark)">Forgot your password?</a>
+              </p>
             </div>
-            <button type="submit" class="btn btn-primary btn-full mt-md">Sign Up</button>
-          </form>
+          </div>
+
+          <!-- Divider -->
+          <div style="background:var(--grey-light);height:100%;min-height:300px;border-radius:2px"></div>
+
+          <!-- Sign Up -->
+          <div class="card">
+            <div class="card-header"><h3>Sign Up</h3></div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">First Name</label>
+                  <input class="form-control" type="text" id="reg-first" placeholder="First name" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name</label>
+                  <input class="form-control" type="text" id="reg-last" placeholder="Last name" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input class="form-control" type="email" id="reg-email" placeholder="Email address" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input class="form-control" type="tel" id="reg-phone" placeholder="Phone number" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Date of Birth</label>
+                  <input class="form-control" type="date" id="reg-dob" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Address</label>
+                  <input class="form-control" type="text" id="reg-address" placeholder="Home address" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Password</label>
+                  <input class="form-control" type="password" id="reg-password" placeholder="Create password" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm Password</label>
+                  <input class="form-control" type="password" id="reg-confirm" placeholder="Confirm password" />
+                </div>
+              </div>
+              <button class="btn btn-teal btn-full btn-lg mt-md" id="signup-btn">Sign Up</button>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -86,37 +111,35 @@
   <script>
     mountChrome('');
 
-    document.getElementById('login-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const username = fd.get('username').trim();
-      if (!username) return;
-      userStorage.set({ username, firstName: username });
-      showToast(`Welcome back, ${username}!`, 'success');
-      setTimeout(() => window.location.href = 'reservations.html', 500);
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const first = document.getElementById('login-first').value.trim();
+      const last  = document.getElementById('login-last').value.trim();
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-password').value.trim();
+      if (!first || !last)       return showToast('Please enter your first and last name', 'warning');
+      if (!validateEmail(email)) return showToast('Please enter a valid email address', 'warning');
+      if (!pass)                 return showToast('Please enter your password', 'warning');
+      const name = first + ' ' + last;
+      setUser({ name, firstName: first, lastName: last, email });
+      showToast('Welcome back, ' + first + '!', 'success');
+      setTimeout(() => window.location.href = 'index.html', 800);
     });
 
-    document.getElementById('signup-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const email = fd.get('email');
-      if (!validateEmail(email)) {
-        return showToast('Please enter a valid email address', 'warning');
-      }
-      if (fd.get('password') !== fd.get('confirm')) {
-        return showToast('Passwords do not match', 'warning');
-      }
-      const user = {
-        firstName: fd.get('firstName'),
-        lastName:  fd.get('lastName'),
-        email,
-        phone:     fd.get('phone'),
-        dob:       fd.get('dob'),
-        address:   fd.get('address'),
-      };
-      userStorage.set(user);
-      showToast(`Account created — welcome, ${user.firstName}!`, 'success');
-      setTimeout(() => window.location.href = 'reservations.html', 500);
+    document.getElementById('signup-btn').addEventListener('click', () => {
+      const first   = document.getElementById('reg-first').value.trim();
+      const last    = document.getElementById('reg-last').value.trim();
+      const email   = document.getElementById('reg-email').value.trim();
+      const pass    = document.getElementById('reg-password').value.trim();
+      const confirm = document.getElementById('reg-confirm').value.trim();
+
+      if (!first || !last)        return showToast('Please enter your name', 'warning');
+      if (!validateEmail(email))  return showToast('Please enter a valid email address', 'warning');
+      if (pass.length < 6)        return showToast('Password must be at least 6 characters', 'warning');
+      if (pass !== confirm)       return showToast('Passwords do not match', 'warning');
+
+      setUser({ name: first + ' ' + last });
+      showToast('Account created — welcome to FlyDreamAir, ' + first + '!', 'success');
+      setTimeout(() => window.location.href = 'index.html', 800);
     });
   </script>
 </body>
