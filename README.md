@@ -9,11 +9,10 @@ You can search flights, pick seats, add meals, sign in, and edit existing bookin
 - `index.html` — home and flight search form
 - `search.html` — results, with filters for stops, price and departure time
 - `seats.html` — seat map across First, Business and Economy
-- `meals.html` — meals, drinks and baggage per passenger, with a running total
+- `services.html` — meals, drinks and baggage per passenger, with a running total
 - `login.html` — sign in and sign up
 - `reservations.html` — list of existing bookings with Modify and Cancel
-- `modify.html` — five-tab booking editor that shows the price difference as you change things
-
+- `payment.html` — page where passenger and payment info is added
 ## Tech stack
 
 HTML, CSS, vanilla JS. No frameworks, no build step.
