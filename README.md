@@ -13,6 +13,7 @@ You can search flights, pick seats, add meals, sign in, and edit existing bookin
 - `login.html` — sign in and sign up
 - `reservations.html` — list of existing bookings with Modify and Cancel
 - `payment.html` — page where passenger and payment info is added
+- `confirmation.html` — confirmation of booking
 ## Tech stack
 
 HTML, CSS, vanilla JS. No frameworks, no build step.
@@ -38,10 +39,11 @@ FlyDreamAir-Booking-System/
 ├── index.html
 ├── search.html
 ├── seats.html
-├── meals.html
+├── services.html
+├── payment.html
+├── confirmation.html
 ├── login.html
 ├── reservations.html
-├── modify.html
 ├── main.js             shared data and helpers
 ├── styles.css          styles
 └── README.md
