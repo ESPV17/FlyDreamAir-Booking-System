@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Confirmed — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <div class="confirm-hero">
+      <div class="container">
+        <div class="confirm-icon animate-fade-up">✅</div>
+        <h1 class="text-white animate-fade-up delay-1">Booking Confirmed!</h1>
+        <p class="text-white animate-fade-up delay-2" style="font-size:1.1rem">Your booking is confirmed. Have a great flight!</p>
+        <div class="ref-badge animate-fade-up delay-3" id="ref-badge">REF-—</div>
+      </div>
+    </div>
+
+    <section class="section-sm">
+      <div class="container" style="max-width:700px">
+
+        <div class="card mb-md animate-fade-up">
+          <div class="card-header"><h3>Flight Details</h3></div>
+          <div class="card-body" id="flight-details"></div>
+        </div>
+
+        <div class="card mb-md animate-fade-up delay-1">
+          <div class="card-header"><h3>Passengers</h3></div>
+          <div class="card-body" id="passenger-details"></div>
+        </div>
+
+        <div class="card mb-md animate-fade-up delay-2">
+          <div class="card-header"><h3>Order Total</h3></div>
+          <div class="card-body" id="total-details"></div>
+        </div>
+
+        <div class="flex gap-md mt-lg animate-fade-up delay-3" style="justify-content:center;flex-wrap:wrap">
+          <a href="reservations.html" class="btn btn-primary btn-lg">View My Bookings</a>
+          <a href="index.html" class="btn btn-secondary btn-lg">Book Another Flight</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+  <script src="main.js"></script>
+  <script>
+    mountChrome('');
+    const booking = loadBooking();
+    const res     = booking.confirmedReservation;
+    const flight  = res ? getFlightById(res.flightId) : booking.selectedFlight;
+
+    document.getElementById('ref-badge').textContent = res ? res.id : 'REF-DEMO';
+
+    document.getElementById('flight-details').innerHTML = `
+      <div class="res-route" style="display:flex;align-items:center;gap:var(--gap-lg);margin-bottom:var(--gap-md)">
+        <div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1.2rem">${res ? res.fromCity : '—'}</div>
+          <div class="text-sm text-light">${res ? res.from : ''} · ${res ? res.depart : ''}</div>
+        </div>
+        <div style="color:var(--sky-blue);font-size:1.8rem">✈</div>
+        <div>
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1.2rem">${res ? res.toCity : '—'}</div>
+          <div class="text-sm text-light">${res ? res.to : ''} · ${res ? res.arrive : ''}</div>
+        </div>
+      </div>
+      <div class="summary-row"><span>Date</span><span>${res ? formatDate(res.date) : '—'}</span></div>
+      <div class="summary-row"><span>Flight</span><span>${res ? res.flightId : '—'}</span></div>
+      <div class="summary-row"><span>Trip type</span><span>${res && res.tripType === 'return' ? 'Return' : 'One-Way'}</span></div>
+      <div class="summary-row"><span>Status</span><span><span class="badge badge-green">Confirmed ✓</span></span></div>
+    `;
+
+    const passengers = res ? res.passengers : (booking.passengers || []);
+    document.getElementById('passenger-details').innerHTML = passengers.map((p, i) => `
+      <div class="summary-row">
+        <span>Passenger ${i+1} — ${p.name||'Unknown'}</span>
+        <span>Seat ${p.seat||'—'}</span>
+      </div>
+    `).join('');
+
+    const flightCost  = flight ? flight.price * passengers.length : 0;
+    const addonsTotal = booking.addonsTotal || 0;
+    const grandTotal  = res ? res.total : flightCost + addonsTotal;
+
+    let totalHtml = `
+      <div class="summary-row"><span>Flight (×${passengers.length})</span><span>${formatCurrency(flightCost)}</span></div>
+    `;
+    if (addonsTotal > 0) {
+      totalHtml += `<div class="summary-row"><span>Add-ons total</span><span>${formatCurrency(addonsTotal)}</span></div>`;
+    }
+    totalHtml += `<div class="divider"></div><div class="summary-row"><span class="summary-total">Total Paid</span><span class="summary-total">${formatCurrency(grandTotal)}</span></div>`;
+    document.getElementById('total-details').innerHTML = totalHtml;
+
+    clearBooking();
+  </script>
+</body>
+</html>
