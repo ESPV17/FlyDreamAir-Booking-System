@@ -56,21 +56,34 @@
 
     document.getElementById('ref-badge').textContent = res ? res.id : 'REF-DEMO';
 
+    const returnFlight = booking.returnFlight;
+
+    function flightRow(f, label) {
+      if (!f) return '';
+      return `
+        <div style="margin-bottom:var(--gap-md)">
+          <div style="font-family:var(--font-display);font-size:0.75rem;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--gap-sm)">${label}</div>
+          <div class="res-route" style="display:flex;align-items:center;gap:var(--gap-lg)">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem">${f.fromCity || (res && res.fromCity) || '—'}</div>
+              <div class="text-sm text-light">${f.from || (res && res.from) || ''} · ${f.depart || (res && res.depart) || ''}</div>
+            </div>
+            <div style="color:var(--sky-blue);font-size:1.6rem">✈</div>
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1.1rem">${f.toCity || (res && res.toCity) || '—'}</div>
+              <div class="text-sm text-light">${f.to || (res && res.to) || ''} · ${f.arrive || (res && res.arrive) || ''}</div>
+            </div>
+          </div>
+          <div class="summary-row" style="margin-top:var(--gap-sm)"><span>Date</span><span>${formatDate(f.date || (res && res.date))}</span></div>
+          <div class="summary-row"><span>Flight</span><span>${f.id || (res && res.flightId) || '—'}</span></div>
+        </div>
+      `;
+    }
+
     document.getElementById('flight-details').innerHTML = `
-      <div class="res-route" style="display:flex;align-items:center;gap:var(--gap-lg);margin-bottom:var(--gap-md)">
-        <div>
-          <div style="font-family:var(--font-display);font-weight:700;font-size:1.2rem">${res ? res.fromCity : '—'}</div>
-          <div class="text-sm text-light">${res ? res.from : ''} · ${res ? res.depart : ''}</div>
-        </div>
-        <div style="color:var(--sky-blue);font-size:1.8rem">✈</div>
-        <div>
-          <div style="font-family:var(--font-display);font-weight:700;font-size:1.2rem">${res ? res.toCity : '—'}</div>
-          <div class="text-sm text-light">${res ? res.to : ''} · ${res ? res.arrive : ''}</div>
-        </div>
-      </div>
-      <div class="summary-row"><span>Date</span><span>${res ? formatDate(res.date) : '—'}</span></div>
-      <div class="summary-row"><span>Flight</span><span>${res ? res.flightId : '—'}</span></div>
-      <div class="summary-row"><span>Trip type</span><span>${res && res.tripType === 'return' ? 'Return' : 'One-Way'}</span></div>
+      ${flightRow(flight || res, 'Outbound Flight')}
+      ${returnFlight ? '<div class="divider"></div>' + flightRow(returnFlight, 'Return Flight') : ''}
+      <div class="summary-row"><span>Trip type</span><span>${returnFlight ? 'Return' : 'One-Way'}</span></div>
       <div class="summary-row"><span>Status</span><span><span class="badge badge-green">Confirmed ✓</span></span></div>
     `;
 
@@ -83,12 +96,16 @@
     `).join('');
 
     const flightCost  = flight ? flight.price * passengers.length : 0;
+    const returnCost  = returnFlight ? returnFlight.price * passengers.length : 0;
     const addonsTotal = booking.addonsTotal || 0;
-    const grandTotal  = res ? res.total : flightCost + addonsTotal;
+    const grandTotal  = res ? res.total : flightCost + returnCost + addonsTotal;
 
     let totalHtml = `
-      <div class="summary-row"><span>Flight (×${passengers.length})</span><span>${formatCurrency(flightCost)}</span></div>
+      <div class="summary-row"><span>Outbound flight (×${passengers.length})</span><span>${formatCurrency(flightCost)}</span></div>
     `;
+    if (returnFlight) {
+      totalHtml += `<div class="summary-row"><span>Return flight (×${passengers.length})</span><span>${formatCurrency(returnCost)}</span></div>`;
+    }
     if (addonsTotal > 0) {
       totalHtml += `<div class="summary-row"><span>Add-ons total</span><span>${formatCurrency(addonsTotal)}</span></div>`;
     }
@@ -99,3 +116,4 @@
   </script>
 </body>
 </html>
+
