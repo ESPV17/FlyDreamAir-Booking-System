@@ -142,25 +142,72 @@
     const outboundArriveTime = pickingReturn && booking.selectedFlight
       ? booking.selectedFlight.arrive.replace('+1','').trim()
       : null;
+    const outboundDate = params.departDate;
 
-    const DATE_STRIP = ['2026-05-30','2026-05-31','2026-06-01','2026-06-02','2026-06-03'];
-    // Make sure activeDate is always in the strip — fall back to first strip date if not
-    let rawDate  = (pickingReturn ? params.returnDate : params.departDate) || '2026-06-01';
-    let activeDate = DATE_STRIP.includes(rawDate) ? rawDate : DATE_STRIP[2];
+    function addDays(dateStr, n) {
+      const d = new Date(dateStr + 'T00:00:00');
+      d.setDate(d.getDate() + n);
+      return d.toISOString().split('T')[0];
+    }
+
+    // For return: base date is the departure date the user searched (not the flight's stored date)
+    // This prevents going back before the day they flew out
+    const baseDate = pickingReturn ? (params.departDate || '2026-05-30') : (params.departDate || '2026-05-30');
+
+    // For return, jump to the return date the user picked on the homepage if it's after baseDate
+    const preferredDate = pickingReturn && params.returnDate && params.returnDate >= baseDate
+      ? params.returnDate
+      : baseDate;
+
+    let stripStart = preferredDate;
+    let activeDate = preferredDate;
+
+    // Update header date to match active date chip
+    function updateHeaderDate() {
+      document.getElementById('route-summary').textContent =
+        formatDate(activeDate) + ' · ' + params.passengers + ' passenger(s) · ' + (params.cabin||'Economy');
+    }
+
+    function getStrip() {
+      return Array.from({ length: 5 }, (_, i) => addDays(stripStart, i));
+    }
 
     function renderChips() {
+      const strip   = getStrip();
+      // Ensure flights exist for all visible dates
+      strip.forEach(d => ensureFlightsForDate(d));
       const matching = FDA.flights.filter(f => f.from === currentFrom && f.to === currentTo);
-      document.getElementById('date-chips').innerHTML = DATE_STRIP.map(d => {
-        const onDay = matching.filter(f => f.date === d);
-        const cheap = onDay.length ? Math.min(...onDay.map(f => f.price)) : null;
-        const c = formatChip(d);
-        return `<div class="date-chip ${d===activeDate?'active':''}" data-date="${d}" role="button">
-          <span class="day">${c.day} ${c.dm}</span>
-          <span class="price">${cheap ? formatCurrency(cheap) : '—'}</span>
-        </div>`;
-      }).join('');
-      document.querySelectorAll('.date-chip').forEach(c => {
-        c.addEventListener('click', () => { activeDate = c.dataset.date; renderChips(); render(); });
+      const canGoPrev = stripStart > baseDate;
+      const prevStyle = canGoPrev ? 'cursor:pointer' : 'opacity:0.3;cursor:not-allowed;pointer-events:none';
+
+      document.getElementById('date-chips').innerHTML = `
+        <div class="date-chip" id="chip-prev" role="button" style="${prevStyle}">‹</div>
+        ${strip.map(d => {
+          const onDay = matching.filter(f => f.date === d);
+          const cheap = onDay.length ? Math.min(...onDay.map(f => f.price)) : null;
+          const c = formatChip(d);
+          return `<div class="date-chip ${d===activeDate?'active':''}" data-date="${d}" role="button">
+            <span class="day">${c.day} ${c.dm}</span>
+            <span class="price">${cheap ? formatCurrency(cheap) : '—'}</span>
+          </div>`;
+        }).join('')}
+        <div class="date-chip" id="chip-next" role="button">›</div>
+      `;
+
+      document.getElementById('chip-prev').addEventListener('click', () => {
+        if (stripStart <= baseDate) return;
+        const newStart = addDays(stripStart, -5);
+        stripStart = newStart <= baseDate ? baseDate : newStart;
+        if (activeDate < stripStart) activeDate = stripStart;
+        updateHeaderDate(); renderChips(); render();
+      });
+      document.getElementById('chip-next').addEventListener('click', () => {
+        stripStart = addDays(stripStart, 5);
+        if (activeDate < stripStart) activeDate = stripStart;
+        updateHeaderDate(); renderChips(); render();
+      });
+      document.querySelectorAll('.date-chip[data-date]').forEach(c => {
+        c.addEventListener('click', () => { activeDate = c.dataset.date; updateHeaderDate(); renderChips(); render(); });
       });
     }
 
@@ -175,6 +222,7 @@
       const tBucket  = document.getElementById('filter-time').value;
       const sort     = document.getElementById('filter-sort').value;
       document.getElementById('max-price-label').textContent = formatCurrency(maxPrice);
+      ensureFlightsForDate(activeDate);
 
       let list = FDA.flights.filter(f => {
         if (f.from !== currentFrom) return false;
@@ -184,7 +232,7 @@
         if (f.price > maxPrice) return false;
         if (tBucket !== 'any' && timeBucket(f.depart) !== tBucket) return false;
         // For same-day return, hide flights that depart before or at the same time the outbound arrives
-        if (outboundArriveTime && activeDate === params.departDate) {
+        if (outboundArriveTime && activeDate === outboundDate) {
           if (f.depart <= outboundArriveTime) return false;
         }
         return true;
@@ -201,8 +249,8 @@
       if (!list.length) {
         listEl.innerHTML = `<div class="text-center" style="padding:var(--gap-xxl) 0">
           <div style="font-size:3rem">🛬</div>
-          <h3 style="margin-top:var(--gap-md)">No flights found</h3>
-          <p>Try adjusting the filters or searching a different route.</p>
+          <h3 style="margin-top:var(--gap-md)">No flights found for this route</h3>
+          <p style="max-width:420px;margin:var(--gap-sm) auto 0">FlyDreamAir doesn't currently operate direct flights on this route. Try selecting a different date, or route through a major hub like Sydney (SYD) or Melbourne (MEL).</p>
         </div>`;
         return;
       }
@@ -242,8 +290,10 @@
       document.getElementById(id).addEventListener('change', render)
     );
     document.getElementById('filter-price').addEventListener('input', render);
+    updateHeaderDate();
     renderChips();
     render();
   </script>
 </body>
 </html>
+
