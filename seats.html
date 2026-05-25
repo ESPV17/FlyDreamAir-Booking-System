@@ -100,7 +100,7 @@
           <div class="step-line done"></div>
           <div class="step done"><div class="step-num">✓</div><span class="step-label">Choose Flight</span></div>
           <div class="step-line"></div>
-          <div class="step active"><div class="step-num">3</div><span class="step-label">Seats</span></div>
+          <div class="step active"><div class="step-num">3</div><span class="step-label" id="seats-step-label">Seats</span></div>
           <div class="step-line"></div>
           <div class="step"><div class="step-num">4</div><span class="step-label">Add-ons</span></div>
           <div class="step-line"></div>
@@ -160,7 +160,8 @@
   <script>
     mountChrome('search');
     const booking        = loadBooking();
-    const flight         = booking.selectedFlight;
+    const isReturnSeats  = !!(booking.returnFlight && booking.doReturnSeats);
+    const flight         = isReturnSeats ? booking.returnFlight : booking.selectedFlight;
     const passengerCount = (booking.passengers||[]).length || 1;
     const SEAT_FEE       = 15;
 
@@ -169,10 +170,12 @@
       setTimeout(() => window.location.href='search.html', 1500);
     }
 
+    // Update step label and flight info
+    const legLabel = isReturnSeats ? 'Return Flight Seats' : 'Outbound Flight Seats';
     document.getElementById('flight-summary').textContent =
-      flight ? `${flight.id} · ${flight.fromCity} → ${flight.toCity} · ${flight.depart} – ${flight.arrive}` : '';
+      flight ? `${legLabel} · ${flight.id} · ${flight.fromCity} → ${flight.toCity} · ${flight.depart} – ${flight.arrive}` : '';
     document.getElementById('flight-label').textContent =
-      flight ? `FLIGHT ${flight.from} TO ${flight.to} ${flight.depart}` : 'FLIGHT';
+      flight ? `${isReturnSeats ? 'RETURN' : 'OUTBOUND'} FLIGHT ${flight.from} TO ${flight.to} ${flight.depart}` : 'FLIGHT';
 
     const selectedSeats  = {};
     let   currentPassenger = 0;
@@ -287,12 +290,37 @@
     body.appendChild(buildCabin('Economy Class',  9,  30, ['A','B','C','D','E','F']));
 
     updateUI();
+    document.getElementById('seats-step-label').textContent = isReturnSeats ? 'Return Seats' : booking.returnFlight ? 'Outbound Seats' : 'Seats';
 
     document.getElementById('continue-btn').addEventListener('click', () => {
       const passengers = (booking.passengers||[]).map((p,i) => ({ ...p, seat: selectedSeats[i]||null }));
-      saveBooking({ seats: Object.values(selectedSeats), passengers, seatFee: SEAT_FEE * Object.keys(selectedSeats).length });
-      window.location.href = 'services.html';
+
+      if (isReturnSeats) {
+        // Done with return seats — go to services
+        saveBooking({
+          returnSeats: Object.values(selectedSeats),
+          returnPassengers: passengers,
+          seatFee: (booking.seatFee || 0) + SEAT_FEE * Object.keys(selectedSeats).length,
+          doReturnSeats: false,
+        });
+        window.location.href = 'services.html';
+      } else if (booking.returnFlight) {
+        // Outbound seats done — now do return seats
+        saveBooking({
+          seats: Object.values(selectedSeats),
+          passengers,
+          seatFee: SEAT_FEE * Object.keys(selectedSeats).length,
+          doReturnSeats: true,
+        });
+        showToast('Outbound seats saved — now select return seats', 'info');
+        window.location.href = 'seats.html';
+      } else {
+        // One way — go straight to services
+        saveBooking({ seats: Object.values(selectedSeats), passengers, seatFee: SEAT_FEE * Object.keys(selectedSeats).length });
+        window.location.href = 'services.html';
+      }
     });
   </script>
 </body>
 </html>
+
