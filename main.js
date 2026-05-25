@@ -1,7 +1,3 @@
-/* ============================================================
-   FlyDreamAir — Base JavaScript Utilities
-   ============================================================ */
-
 'use strict';
 
 // ── App State ─────────────────────────────────────────────────
@@ -101,6 +97,57 @@ const FDA = {
     { id:'FDA2001', from:'ADL', fromCity:'Adelaide',  to:'MEL', toCity:'Melbourne',   date:'2026-05-31', depart:'11:00', arrive:'12:10',   duration:'1h 10m',  price:109,  seats:55, stops:0 },
     { id:'FDA2002', from:'ADL', fromCity:'Adelaide',  to:'MEL', toCity:'Melbourne',   date:'2026-06-02', depart:'15:00', arrive:'16:10',   duration:'1h 10m',  price:129,  seats:40, stops:0 },
     { id:'FDA2003', from:'ADL', fromCity:'Adelaide',  to:'MEL', toCity:'Melbourne',   date:'2026-06-03', depart:'09:30', arrive:'10:40',   duration:'1h 10m',  price:99,   seats:60, stops:0 },
+    // NRT → SYD (Tokyo to Sydney)
+    { id:'FDA2101', from:'NRT', fromCity:'Tokyo',     to:'SYD', toCity:'Sydney',      date:'2026-05-30', depart:'10:00', arrive:'21:00',   duration:'9h 00m',  price:879,  seats:18, stops:0 },
+    { id:'FDA2102', from:'NRT', fromCity:'Tokyo',     to:'SYD', toCity:'Sydney',      date:'2026-06-01', depart:'11:30', arrive:'22:30',   duration:'9h 00m',  price:929,  seats:14, stops:0 },
+    { id:'FDA2103', from:'NRT', fromCity:'Tokyo',     to:'SYD', toCity:'Sydney',      date:'2026-06-03', depart:'09:00', arrive:'20:00',   duration:'9h 00m',  price:829,  seats:22, stops:0 },
+    // NRT → MEL (Tokyo to Melbourne)
+    { id:'FDA2201', from:'NRT', fromCity:'Tokyo',     to:'MEL', toCity:'Melbourne',   date:'2026-05-31', depart:'10:30', arrive:'22:30',   duration:'10h 00m', price:919,  seats:16, stops:0 },
+    { id:'FDA2202', from:'NRT', fromCity:'Tokyo',     to:'MEL', toCity:'Melbourne',   date:'2026-06-01', depart:'12:00', arrive:'00:00+1', duration:'10h 00m', price:949,  seats:12, stops:0 },
+    { id:'FDA2203', from:'NRT', fromCity:'Tokyo',     to:'MEL', toCity:'Melbourne',   date:'2026-06-03', depart:'09:30', arrive:'21:30',   duration:'10h 00m', price:869,  seats:20, stops:0 },
+    // MEL → NRT (Melbourne to Tokyo)
+    { id:'FDA2301', from:'MEL', fromCity:'Melbourne', to:'NRT', toCity:'Tokyo',       date:'2026-05-30', depart:'20:00', arrive:'06:00+1', duration:'10h 00m', price:909,  seats:15, stops:0 },
+    { id:'FDA2302', from:'MEL', fromCity:'Melbourne', to:'NRT', toCity:'Tokyo',       date:'2026-06-02', depart:'21:30', arrive:'07:30+1', duration:'10h 00m', price:879,  seats:18, stops:0 },
+    { id:'FDA2303', from:'MEL', fromCity:'Melbourne', to:'NRT', toCity:'Tokyo',       date:'2026-06-03', depart:'19:00', arrive:'05:00+1', duration:'10h 00m', price:849,  seats:25, stops:0 },
+    // DXB → SYD (Dubai to Sydney)
+    { id:'FDA2401', from:'DXB', fromCity:'Dubai',     to:'SYD', toCity:'Sydney',      date:'2026-05-30', depart:'08:00', arrive:'00:00+1', duration:'14h 00m', price:1349, seats:12, stops:0 },
+    { id:'FDA2402', from:'DXB', fromCity:'Dubai',     to:'SYD', toCity:'Sydney',      date:'2026-06-01', depart:'09:30', arrive:'01:30+1', duration:'14h 00m', price:1299, seats:10, stops:0 },
+    { id:'FDA2403', from:'DXB', fromCity:'Dubai',     to:'SYD', toCity:'Sydney',      date:'2026-06-03', depart:'07:00', arrive:'23:00',   duration:'14h 00m', price:1249, seats:15, stops:0 },
+    // DXB → MEL (Dubai to Melbourne)
+    { id:'FDA2501', from:'DXB', fromCity:'Dubai',     to:'MEL', toCity:'Melbourne',   date:'2026-05-31', depart:'08:30', arrive:'01:30+1', duration:'15h 00m', price:1379, seats:10, stops:0 },
+    { id:'FDA2502', from:'DXB', fromCity:'Dubai',     to:'MEL', toCity:'Melbourne',   date:'2026-06-02', depart:'10:00', arrive:'03:00+1', duration:'15h 00m', price:1329, seats:12, stops:0 },
+    // MEL → DXB (Melbourne to Dubai)
+    { id:'FDA2601', from:'MEL', fromCity:'Melbourne', to:'DXB', toCity:'Dubai',       date:'2026-05-30', depart:'22:00', arrive:'05:30+1', duration:'15h 00m', price:1359, seats:11, stops:0 },
+    { id:'FDA2602', from:'MEL', fromCity:'Melbourne', to:'DXB', toCity:'Dubai',       date:'2026-06-02', depart:'21:00', arrive:'04:30+1', duration:'15h 00m', price:1299, seats:14, stops:0 },
+    // SIN → MEL (Singapore to Melbourne)
+    { id:'FDA2701', from:'SIN', fromCity:'Singapore', to:'MEL', toCity:'Melbourne',   date:'2026-05-30', depart:'09:00', arrive:'19:30',   duration:'8h 00m',  price:679,  seats:28, stops:0 },
+    { id:'FDA2702', from:'SIN', fromCity:'Singapore', to:'MEL', toCity:'Melbourne',   date:'2026-06-01', depart:'10:30', arrive:'21:00',   duration:'8h 00m',  price:699,  seats:22, stops:0 },
+    { id:'FDA2703', from:'SIN', fromCity:'Singapore', to:'MEL', toCity:'Melbourne',   date:'2026-06-03', depart:'08:00', arrive:'18:30',   duration:'8h 00m',  price:649,  seats:32, stops:0 },
+    // MEL → SIN (Melbourne to Singapore)
+    { id:'FDA2801', from:'MEL', fromCity:'Melbourne', to:'SIN', toCity:'Singapore',   date:'2026-05-31', depart:'09:00', arrive:'15:30',   duration:'8h 00m',  price:689,  seats:25, stops:0 },
+    { id:'FDA2802', from:'MEL', fromCity:'Melbourne', to:'SIN', toCity:'Singapore',   date:'2026-06-02', depart:'10:30', arrive:'17:00',   duration:'8h 00m',  price:669,  seats:30, stops:0 },
+    // LHR → SYD (London to Sydney)
+    { id:'FDA2901', from:'LHR', fromCity:'London',    to:'SYD', toCity:'Sydney',      date:'2026-05-30', depart:'21:00', arrive:'06:00+2', duration:'21h 00m', price:1849, seats:9,  stops:1 },
+    { id:'FDA2902', from:'LHR', fromCity:'London',    to:'SYD', toCity:'Sydney',      date:'2026-06-02', depart:'20:00', arrive:'05:00+2', duration:'21h 00m', price:1749, seats:11, stops:1 },
+    // LAX → SYD (Los Angeles to Sydney)
+    { id:'FDA3001', from:'LAX', fromCity:'Los Angeles', to:'SYD', toCity:'Sydney',    date:'2026-05-31', depart:'22:30', arrive:'07:00+2', duration:'15h 00m', price:1199, seats:10, stops:0 },
+    { id:'FDA3002', from:'LAX', fromCity:'Los Angeles', to:'SYD', toCity:'Sydney',    date:'2026-06-02', depart:'23:00', arrive:'07:30+2', duration:'15h 00m', price:1149, seats:13, stops:0 },
+    // SYD → OOL (Gold Coast)
+    { id:'FDA3101', from:'SYD', fromCity:'Sydney',    to:'OOL', toCity:'Gold Coast',  date:'2026-05-30', depart:'07:00', arrive:'08:10',   duration:'1h 10m',  price:109,  seats:55, stops:0 },
+    { id:'FDA3102', from:'SYD', fromCity:'Sydney',    to:'OOL', toCity:'Gold Coast',  date:'2026-06-01', depart:'11:00', arrive:'12:10',   duration:'1h 10m',  price:129,  seats:45, stops:0 },
+    { id:'FDA3103', from:'SYD', fromCity:'Sydney',    to:'OOL', toCity:'Gold Coast',  date:'2026-06-03', depart:'15:30', arrive:'16:40',   duration:'1h 10m',  price:119,  seats:40, stops:0 },
+    // OOL → SYD (Gold Coast to Sydney)
+    { id:'FDA3201', from:'OOL', fromCity:'Gold Coast', to:'SYD', toCity:'Sydney',     date:'2026-05-31', depart:'09:00', arrive:'10:10',   duration:'1h 10m',  price:99,   seats:60, stops:0 },
+    { id:'FDA3202', from:'OOL', fromCity:'Gold Coast', to:'SYD', toCity:'Sydney',     date:'2026-06-01', depart:'13:00', arrive:'14:10',   duration:'1h 10m',  price:119,  seats:50, stops:0 },
+    { id:'FDA3203', from:'OOL', fromCity:'Gold Coast', to:'SYD', toCity:'Sydney',     date:'2026-06-03', depart:'17:00', arrive:'18:10',   duration:'1h 10m',  price:109,  seats:45, stops:0 },
+    // SYD → CBR (Canberra)
+    { id:'FDA3301', from:'SYD', fromCity:'Sydney',    to:'CBR', toCity:'Canberra',    date:'2026-05-30', depart:'06:30', arrive:'07:20',   duration:'0h 50m',  price:79,   seats:65, stops:0 },
+    { id:'FDA3302', from:'SYD', fromCity:'Sydney',    to:'CBR', toCity:'Canberra',    date:'2026-06-01', depart:'12:00', arrive:'12:50',   duration:'0h 50m',  price:99,   seats:55, stops:0 },
+    { id:'FDA3303', from:'SYD', fromCity:'Sydney',    to:'CBR', toCity:'Canberra',    date:'2026-06-03', depart:'17:00', arrive:'17:50',   duration:'0h 50m',  price:89,   seats:60, stops:0 },
+    // CBR → SYD (Canberra to Sydney)
+    { id:'FDA3401', from:'CBR', fromCity:'Canberra',  to:'SYD', toCity:'Sydney',      date:'2026-05-31', depart:'08:00', arrive:'08:50',   duration:'0h 50m',  price:79,   seats:65, stops:0 },
+    { id:'FDA3402', from:'CBR', fromCity:'Canberra',  to:'SYD', toCity:'Sydney',      date:'2026-06-02', depart:'14:00', arrive:'14:50',   duration:'0h 50m',  price:99,   seats:55, stops:0 },
+    { id:'FDA3403', from:'CBR', fromCity:'Canberra',  to:'SYD', toCity:'Sydney',      date:'2026-06-03', depart:'18:30', arrive:'19:20',   duration:'0h 50m',  price:89,   seats:60, stops:0 },
   ],
 
 
@@ -167,7 +214,40 @@ const FDA = {
   ],
 };
 
-// ── Storage ───────────────────────────────────────────────────
+// ── On-demand flight generation for any date ──────────────────
+// Instead of pre-generating, we generate flights for a date when needed
+const _generatedDates = new Set(FDA.flights.map(f => f.date));
+
+const _templateFlights = (() => {
+  const seen = new Set();
+  return FDA.flights.filter(f => {
+    const key = `${f.from}-${f.to}-${f.depart}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+})();
+
+let _idCounter = 9000;
+
+function ensureFlightsForDate(dateStr) {
+  if (_generatedDates.has(dateStr)) return;
+  _generatedDates.add(dateStr);
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  const weekendAdj = (dow === 0 || dow === 6) ? 20 : 0;
+  const seed = dateStr.replace(/-/g,'').slice(-3);
+  const cycleAdj = (parseInt(seed) % 31) - 15;
+  const seats = 15 + (parseInt(seed) % 50);
+  _templateFlights.forEach(f => {
+    FDA.flights.push({
+      ...f,
+      id:    'FDA' + (++_idCounter),
+      date:  dateStr,
+      price: Math.max(59, f.price + weekendAdj + cycleAdj),
+      seats,
+    });
+  });
+}
 const storage = {
   set(key, value)  { try { sessionStorage.setItem('fda_' + key, JSON.stringify(value)); } catch(e) {} },
   get(key)         { try { const v = sessionStorage.getItem('fda_' + key); return v ? JSON.parse(v) : null; } catch(e) { return null; } },
@@ -425,7 +505,13 @@ function loadBooking()      { const s = storage.get('booking'); if (s) Object.as
 function clearBooking()     { FDA.booking = { searchParams:null, selectedFlight:null, passengers:[], seats:[], services:{}, payment:null }; storage.clear('booking'); }
 
 // ── Reservations ──────────────────────────────────────────────
-function getReservations()           { return storage.get('reservations') || FDA.reservations; }
+function getReservations() {
+  const saved = storage.get('reservations');
+  if (saved) return saved;
+  // Only show default sample reservations if user is logged in
+  const user = getUser();
+  return user ? FDA.reservations : [];
+}
 function saveReservation(res)        { const all = getReservations(); all.unshift(res); storage.set('reservations', all); return res; }
 function generateRef()               { return 'REF-' + Math.floor(10000 + Math.random() * 90000); }
 
@@ -551,3 +637,5 @@ function generateRef()               { return 'REF-' + Math.floor(10000 + Math.r
 document.addEventListener('DOMContentLoaded', () => {
   loadBooking();
 });
+
+
