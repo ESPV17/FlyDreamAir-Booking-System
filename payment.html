@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment — FlyDreamAir</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="navbar-mount"></div>
+
+  <main class="app-main">
+    <header class="page-header">
+      <div class="container">
+        <h1>Payment</h1>
+        <p>Complete your booking securely</p>
+      </div>
+    </header>
+
+    <section class="section-sm">
+      <div class="container">
+
+        <div class="steps mb-md">
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Search</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Choose Flight</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Seats</span></div>
+          <div class="step-line done"></div>
+          <div class="step done"><div class="step-num">✓</div><span class="step-label">Add-ons</span></div>
+          <div class="step-line"></div>
+          <div class="step active"><div class="step-num">5</div><span class="step-label">Payment</span></div>
+        </div>
+
+        <div class="grid-2" style="align-items:start;gap:var(--gap-xl)">
+
+          <div>
+            <div class="card mb-md">
+              <div class="card-header"><h3>Passenger Details</h3></div>
+              <div class="card-body" id="passenger-fields"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h3>Payment Details</h3></div>
+              <div class="card-body">
+                <div class="alert alert-info mb-md">ℹ️ This is a prototype — no real payment is processed.</div>
+
+                <div class="form-group">
+                  <label class="form-label">Cardholder name</label>
+                  <input class="form-control" type="text" id="card-name" placeholder="Name on card" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Card number</label>
+                  <input class="form-control" type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Expiry</label>
+                    <input class="form-control" type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">CVV</label>
+                    <input class="form-control" type="text" id="card-cvv" placeholder="123" maxlength="3" />
+                  </div>
+                </div>
+                <div style="display:flex;gap:var(--gap-sm);margin-bottom:var(--gap-md);align-items:center;flex-wrap:wrap">
+                  <img src="visa.webp" alt="Visa" style="height:24px;object-fit:contain;" />
+                  <img src="mastercard.webp" alt="Mastercard" style="height:24px;object-fit:contain;" />
+                  <img src="paypal.webp" alt="PayPal" style="height:24px;object-fit:contain;" />
+                  <img src="afterpay.webp" alt="Afterpay" style="height:24px;object-fit:contain;" />
+                  <img src="stripe.webp" alt="Stripe" style="height:24px;object-fit:contain;" />
+                  <span style="font-size:0.75rem;color:var(--text-light);margin-left:auto">Powered by <strong style="color:#635BFF">Stripe</strong></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--gap-sm);margin-bottom:var(--gap-md)">
+                  <input type="checkbox" id="agree" />
+                  <label for="agree" style="font-size:0.9rem;color:var(--text-mid)">I agree to the <a href="#" style="color:var(--sky-blue-dark)">terms and conditions</a></label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card summary-card">
+              <div class="card-header"><h3>Order Summary</h3></div>
+              <div class="card-body" id="summary-body"></div>
+              <div class="card-footer" style="display:flex;flex-direction:column;gap:var(--gap-sm)">
+                <button class="btn btn-primary btn-full btn-lg" id="pay-btn">Confirm & Pay</button>
+                <button class="btn btn-secondary btn-full" onclick="window.location.href='services.html'">← Back</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-mount"></div>
+  <script src="main.js"></script>
+  <script>
+    mountChrome('search');
+    const booking    = loadBooking();
+    const flight     = booking.selectedFlight;
+    const passengers = booking.passengers || [];
+    const svcData    = booking.perPassengerServices || [];
+    const addonsTotal = booking.addonsTotal || 0;
+    const flightCost  = flight ? flight.price * passengers.length : 0;
+    const grandTotal  = flightCost + addonsTotal;
+
+    // Pre-fill passenger 1 from logged in user if available
+    const loggedInUser = getUser();
+
+    // Passenger fields
+    const pFields = document.getElementById('passenger-fields');
+    passengers.forEach((p, i) => {
+      const isFirst = i === 0 && loggedInUser;
+      const firstName = isFirst ? (loggedInUser.firstName || loggedInUser.name.split(' ')[0] || '') : '';
+      const lastName  = isFirst ? (loggedInUser.lastName  || loggedInUser.name.split(' ').slice(1).join(' ') || '') : '';
+      const email     = isFirst ? (loggedInUser.email || '') : '';
+      pFields.insertAdjacentHTML('beforeend', `
+        <div style="margin-bottom:var(--gap-md)">
+          <div style="font-family:var(--font-display);font-weight:600;margin-bottom:var(--gap-sm)">
+            Passenger ${i+1} ${p.seat ? '· Seat ' + p.seat : ''}
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First name</label>
+              <input class="form-control pax-first" type="text" placeholder="First name" data-idx="${i}" value="${firstName}" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last name</label>
+              <input class="form-control pax-last" type="text" placeholder="Last name" data-idx="${i}" value="${lastName}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-control pax-email" type="email" placeholder="email@example.com" data-idx="${i}" value="${email}" />
+          </div>
+        </div>
+        ${i < passengers.length-1 ? '<div class="divider"></div>' : ''}
+      `);
+    });
+
+    // Summary
+    let summaryHtml = `
+      <div class="summary-row"><span>Flight</span><span>${flight ? flight.id : '—'}</span></div>
+      <div class="summary-row"><span>${flight ? flight.fromCity + ' → ' + flight.toCity : ''}</span><span>${formatCurrency(flightCost)}</span></div>
+      <div class="summary-row"><span>Passengers</span><span>${passengers.length}</span></div>
+    `;
+    if (booking.seats && booking.seats.length) {
+      summaryHtml += `<div class="summary-row"><span>Seats</span><span>${booking.seats.join(', ')}</span></div>`;
+    }
+    if (addonsTotal > 0) {
+      summaryHtml += `<div class="divider"></div>`;
+      svcData.forEach(s => {
+        const rowTotal = s.mealCost + s.drinkCost + s.baggageCost;
+        if (rowTotal > 0) {
+          summaryHtml += `<div class="summary-row text-sm"><span>Passenger ${s.passenger} add-ons</span><span>${formatCurrency(rowTotal)}</span></div>`;
+        }
+      });
+    }
+    summaryHtml += `<div class="divider"></div><div class="summary-row"><span class="summary-total">Total</span><span class="summary-total">${formatCurrency(grandTotal)}</span></div>`;
+    document.getElementById('summary-body').innerHTML = summaryHtml;
+
+    // Card formatting
+    document.getElementById('card-number').addEventListener('input', e => {
+      let v = e.target.value.replace(/\D/g,'').substring(0,16);
+      e.target.value = v.replace(/(.{4})/g,'$1 ').trim();
+    });
+    document.getElementById('card-expiry').addEventListener('input', e => {
+      let v = e.target.value.replace(/\D/g,'').substring(0,4);
+      if (v.length > 2) v = v.substring(0,2) + '/' + v.substring(2);
+      e.target.value = v;
+    });
+
+    document.getElementById('pay-btn').addEventListener('click', () => {
+      const name   = document.getElementById('card-name').value.trim();
+      const number = document.getElementById('card-number').value.replace(/\s/g,'');
+      const expiry = document.getElementById('card-expiry').value;
+      const cvv    = document.getElementById('card-cvv').value;
+      const agree  = document.getElementById('agree').checked;
+
+      if (!name)              return showToast('Please enter the cardholder name','warning');
+      if (number.length < 16) return showToast('Please enter a valid card number','warning');
+      if (expiry.length < 5)  return showToast('Please enter a valid expiry date','warning');
+      if (cvv.length < 3)     return showToast('Please enter a valid CVV','warning');
+      if (!agree)             return showToast('Please agree to the terms and conditions','warning');
+
+      const firstNames = Array.from(document.querySelectorAll('.pax-first'));
+      for (let i = 0; i < firstNames.length; i++) {
+        if (!firstNames[i].value.trim()) return showToast(`Please enter a name for Passenger ${i+1}`,'warning');
+      }
+
+      const paxData = firstNames.map((f,i) => ({
+        name:  f.value.trim() + ' ' + document.querySelectorAll('.pax-last')[i].value.trim(),
+        email: document.querySelectorAll('.pax-email')[i].value.trim(),
+        seat:  (booking.passengers[i]||{}).seat || null,
+      }));
+
+      const reservation = {
+        id: generateRef(),
+        flightId: flight ? flight.id : '',
+        from: flight ? flight.from : '', fromCity: flight ? flight.fromCity : '',
+        to:   flight ? flight.to   : '', toCity:   flight ? flight.toCity   : '',
+        date: (booking.searchParams||{}).departDate || '',
+        depart: flight ? flight.depart : '',
+        arrive: flight ? flight.arrive : '',
+        tripType: (booking.searchParams||{}).tripType || 'OW',
+        passengers: paxData,
+        services: svcData,
+        status: 'confirmed',
+        total: grandTotal,
+      };
+
+      saveReservation(reservation);
+      saveBooking({ confirmedReservation: reservation });
+
+      const btn = document.getElementById('pay-btn');
+      btn.textContent = 'Processing…';
+      btn.disabled = true;
+      setTimeout(() => window.location.href = 'confirmation.html', 1200);
+    });
+  </script>
+</body>
+</html>
